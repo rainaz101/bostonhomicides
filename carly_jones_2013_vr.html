@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carly Jones - VR Crime Scene Reconstruction (2013)</title>
+    <style>
+        body { 
+            background: #1a1a2e; 
+            color: white; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            overflow: hidden;
+        }
+        .scene-container { 
+            position: relative; 
+            width: 100vw; 
+            height: 100vh; 
+        }
+        .scene { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            overflow: hidden;
+        }
+        
+        /* Simple Floor */
+        .floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: linear-gradient(90deg, #8b7355, #a0522d, #8b7355);
+            z-index: 1;
+        }
+        
+        /* Victim Body Outline */
+        .victim-outline { 
+            position: absolute; 
+            left: 50%; 
+            top: 55%; 
+            width: 80px; 
+            height: 160px; 
+            background: rgba(255,0,0,0.2); 
+            border: 4px dashed #ff0000; 
+            border-radius: 40px 40px 0 0; 
+            transform: translate(-50%, -50%); 
+            z-index: 15; 
+        }
+        .victim-outline::before { 
+            content: 'CARLY JONES'; 
+            position: absolute; 
+            top: -40px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: #ff0000; 
+            color: white; 
+            padding: 5px 12px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            border-radius: 5px; 
+        }
+        
+        /* Evidence Markers */
+        .evidence-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ffd700;
+            border: 3px solid #2563eb;
+            border-radius: 50%;
+            z-index: 20;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
+        
+        .evidence-marker:hover {
+            transform: scale(1.5);
+            box-shadow: 0 0 20px #ffd700;
+            border-color: #ff0000;
+        }
+        
+        .evidence-1 { left: 50%; top: 65%; }  /* Primary blood pool */
+        .evidence-2 { left: 45%; top: 70%; }  /* Shell casing 1 */
+        .evidence-3 { left: 40%; top: 55%; }  /* Bullet impact 1 */
+        .evidence-4 { left: 60%; top: 53%; }  /* Bullet impact 2 */
+        .evidence-5 { left: 35%; top: 50%; }  /* Bullet impact 3 */
+        .evidence-6 { left: 55%; top: 75%; }  /* Shell casing 5 */
+        .evidence-7 { left: 48%; top: 68%; }  /* Blood spatter */
+        .evidence-8 { left: 52%; top: 72%; }  /* Secondary blood */
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 8px rgba(255, 215, 0, 0.6); }
+            50% { transform: scale(1.1); box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 8px rgba(255, 215, 0, 0.6); }
+        }
+        
+        /* Evidence Labels */
+        .evidence-label {
+            position: absolute;
+            background: rgba(0,0,0,0.95);
+            color: #ffd700;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 25;
+            opacity: 0;
+            visibility: hidden;
+            max-width: 250px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.8);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            line-height: 1.3;
+            white-space: normal;
+        }
+        
+        .evidence-marker:hover + .evidence-label {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(-5px);
+        }
+        
+        .evidence-label-1 { left: 15%; top: 68%; }
+        .evidence-label-2 { left: 15%; top: 73%; }
+        .evidence-label-3 { left: 15%; top: 58%; }
+        .evidence-label-4 { left: 15%; top: 56%; }
+        .evidence-label-5 { left: 15%; top: 53%; }
+        .evidence-label-6 { left: 15%; top: 78%; }
+        .evidence-label-7 { left: 15%; top: 71%; }
+        .evidence-label-8 { left: 15%; top: 75%; }
+        
+        /* Information Panel - Always Visible */
+        .info-panel { 
+            position: absolute; 
+            top: 20px; 
+            right: 20px; 
+            background: rgba(0,0,0,0.9); 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 3px solid #ffd700; 
+            width: 380px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+            z-index: 30;
+        }
+        .info-panel h2 { 
+            margin: 0 0 15px 0; 
+            color: #ffd700; 
+            font-size: 20px;
+            border-bottom: 2px solid #ffd700;
+            padding-bottom: 8px;
+            text-align: center;
+        }
+        .info-panel p { 
+            margin: 6px 0; 
+            font-size: 13px; 
+            line-height: 1.4;
+        }
+        .info-panel .evidence-list {
+            background: rgba(255,215,0,0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            border-left: 4px solid #ffd700;
+        }
+        .info-panel .evidence-list h4 {
+            color: #ffd700;
+            margin: 0 0 8px 0;
+            font-size: 14px;
+        }
+        .info-panel .evidence-list ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+        .info-panel .evidence-list li {
+            margin: 4px 0;
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        .info-panel .forensic-notes {
+            background: rgba(255,0,0,0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            border-left: 4px solid #ff0000;
+        }
+        .info-panel .forensic-notes h4 {
+            color: #ff0000;
+            margin: 0 0 8px 0;
+            font-size: 14px;
+        }
+        
+        /* Controls */
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 30;
+        }
+        .btn {
+            background: #2563eb;
+            color: #ffd700;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #1d4ed8;
+            transform: scale(1.05);
+        }
+        
+        /* Scene Title */
+        .scene-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.9);
+            color: #ffd700;
+            padding: 15px 25px;
+            border-radius: 10px;
+            border: 3px solid #ffd700;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 30;
+        }
+    </style>
+</head>
+<body>
+    <div class="scene-container">
+        <div class="scene">
+            <!-- Simple Floor -->
+            <div class="floor"></div>
+            
+            <!-- Scene Title -->
+            <div class="scene-title">🔍 Carly Jones Crime Scene - 3rd Floor Hallway</div>
+            
+            <!-- Victim -->
+            <div class="victim-outline"></div>
+            
+            <!-- Evidence Markers -->
+            <div class="evidence-marker evidence-1"></div>
+            <div class="evidence-marker evidence-2"></div>
+            <div class="evidence-marker evidence-3"></div>
+            <div class="evidence-marker evidence-4"></div>
+            <div class="evidence-marker evidence-5"></div>
+            <div class="evidence-marker evidence-6"></div>
+            <div class="evidence-marker evidence-7"></div>
+            <div class="evidence-marker evidence-8"></div>
+            
+            <!-- Evidence Labels -->
+            <div class="evidence-label evidence-label-1">
+                <strong>Primary Blood Pool</strong><br>
+                Large blood pool indicating victim collapsed here. Blood pattern analysis shows victim was standing when first shot.
+            </div>
+            <div class="evidence-label evidence-label-2">
+                <strong>Shell Casing #1</strong><br>
+                9mm Luger casing, Winchester brand. Ejected from weapon during shooting sequence.
+            </div>
+            <div class="evidence-label evidence-label-3">
+                <strong>Bullet Impact #1</strong><br>
+                Bullet hole in wall, trajectory analysis indicates shot fired from approximately 8 feet distance.
+            </div>
+            <div class="evidence-label evidence-label-4">
+                <strong>Bullet Impact #2</strong><br>
+                Second bullet hole, same caliber. Evidence of multiple shots fired rapidly.
+            </div>
+            <div class="evidence-label evidence-label-5">
+                <strong>Bullet Impact #3</strong><br>
+                Third impact point. Bullet recovered from wall, sent to ballistics lab for analysis.
+            </div>
+            <div class="evidence-label evidence-label-6">
+                <strong>Shell Casing #5</strong><br>
+                Final casing found. Total of 5 shots fired, 3 impacts, 2 casings missing.
+            </div>
+            <div class="evidence-label evidence-label-7">
+                <strong>Blood Spatter Pattern</strong><br>
+                High-velocity impact spatter indicating close-range shooting. Pattern analysis ongoing.
+            </div>
+            <div class="evidence-label evidence-label-8">
+                <strong>Secondary Blood Evidence</strong><br>
+                Medium-velocity spatter from victim's movement after initial impact.
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h2>🔍 Carly Jones - Crime Scene Reconstruction</h2>
+            <p><strong>📅 Date:</strong> January 29, 2013</p>
+            <p><strong>🕚 Time:</strong> 11:45 PM</p>
+            <p><strong>📍 Location:</strong> 28 Fawndale Rd, 3rd Floor Hallway</p>
+            <p><strong>👤 Victim:</strong> Carly Jones (32 years old)</p>
+            <p><strong>🔢 Case Number:</strong> BPD-2013-001</p>
+            <p><strong>👮 Lead Detective:</strong> Det. Chen</p>
+            <p><strong>📋 Status:</strong> Active Investigation</p>
+            
+            <div class="evidence-list">
+                <h4>🔬 Evidence Collected:</h4>
+                <ul>
+                    <li><strong>5x 9mm Luger shell casings</strong> - Winchester brand, all fired from same weapon</li>
+                    <li><strong>Blood spatter analysis</strong> - High-velocity impact patterns</li>
+                    <li><strong>3 bullet holes in walls</strong> - Trajectory analysis completed</li>
+                    <li><strong>2 bullets recovered</strong> - Sent to ballistics lab</li>
+                    <li><strong>Gunshot residue samples</strong> - Collected from victim's clothing</li>
+                    <li><strong>Neighbor witness statements</strong> - Heard argument, then gunshots</li>
+                    <li><strong>Building security footage</strong> - Camera malfunctioned during incident</li>
+                    <li><strong>Victim's personal effects</strong> - Purse, keys, phone recovered</li>
+                    <li><strong>DNA evidence</strong> - Blood samples collected for analysis</li>
+                </ul>
+            </div>
+            
+            <div class="forensic-notes">
+                <h4>🔬 Forensic Analysis:</h4>
+                <ul>
+                    <li><strong>Weapon:</strong> 9mm semi-automatic pistol (likely Glock)</li>
+                    <li><strong>Distance:</strong> Close range (3-8 feet)</li>
+                    <li><strong>Shots Fired:</strong> 5 total, 3 impacts, 2 missing</li>
+                    <li><strong>Time of Death:</strong> Estimated 11:47 PM</li>
+                    <li><strong>Cause:</strong> Multiple gunshot wounds to chest and abdomen</li>
+                    <li><strong>Motive:</strong> Unknown - possible domestic dispute</li>
+                </ul>
+            </div>
+            
+            <p><strong>📝 Circumstances:</strong> Victim found with multiple gunshot wounds in apartment building hallway. Neighbors reported hearing argument between 11:30-11:45 PM, followed by 5 gunshots at 11:45 PM. No witnesses came forward. Evidence suggests targeted attack by known assailant.</p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="window.close()">❌ Close Scene</button>
+        </div>
+    </div>
+    
+    <script>
+        // Ensure hover effects work properly
+        document.addEventListener('DOMContentLoaded', function() {
+            const evidenceMarkers = document.querySelectorAll('.evidence-marker');
+            const evidenceLabels = document.querySelectorAll('.evidence-label');
+            
+            evidenceMarkers.forEach((marker, index) => {
+                const label = evidenceLabels[index];
+                
+                marker.addEventListener('mouseenter', function() {
+                    label.style.opacity = '1';
+                    label.style.visibility = 'visible';
+                    label.style.transform = 'translateY(-5px)';
+                });
+                
+                marker.addEventListener('mouseleave', function() {
+                    label.style.opacity = '0';
+                    label.style.visibility = 'hidden';
+                    label.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html> 
